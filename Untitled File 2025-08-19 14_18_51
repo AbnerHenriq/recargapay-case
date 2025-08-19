@@ -1,0 +1,18 @@
+
+-- Exploring datasets 
+SELECT * FROM workspace.raw_recarga_pay.raw_transactions LIMIT 10;
+SELECT * FROM workspace.raw_recarga_pay.raw_users LIMIT 10;
+
+-- Transactions 
+SELECT * FROM workspace.raw_recarga_pay.raw_transactions LIMIT 10;
+SELECT DISTINCT payment_method FROM workspace.raw_recarga_pay.raw_transactions;
+
+-- Users 
+SELECT DISTINCT genero FROM workspace.raw_recarga_pay.raw_users LIMIT 10; -- Necessita ajuste 
+SELECT DISTINCT estado FROM workspace.raw_recarga_pay.raw_users LIMIT 10; -- Necessita ajuste 
+SELECT DISTINCT estado_civil FROM workspace.raw_recarga_pay.raw_users LIMIT 10; -- Ajustar 
+SELECT DISTINCT ocupacao FROM workspace.raw_recarga_pay.raw_users LIMIT 10; 
+SELECT DISTINCT faixa_renda FROM workspace.raw_recarga_pay.raw_users LIMIT 10; -- Necessita ajuste 
+SELECT DISTINCT dispositivo FROM workspace.raw_recarga_pay.raw_users LIMIT 10;
+SELECT DISTINCT telefone FROM workspace.raw_recarga_pay.raw_users LIMIT 10; -- Necessita ajuste 
+
