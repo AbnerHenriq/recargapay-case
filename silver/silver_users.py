@@ -62,7 +62,3 @@ for col_name in string_columns:
 # Adicionar um comentário à tabela para governança
 spark.sql(f"COMMENT ON TABLE {TARGET_TABLE} IS '{TABLE_COMMENT}'")
 print(f"Transformação Silver concluída para {TARGET_TABLE}")
-
-# --- Verificação ---
-print("Amostra dos dados com telefone normalizado:")
-df_final.select("user_id", "telefone").show(10, truncate=False)
