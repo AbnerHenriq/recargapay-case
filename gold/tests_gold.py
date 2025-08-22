@@ -1,5 +1,6 @@
 import great_expectations as ge
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
 
 spark = SparkSession.builder.getOrCreate()
 
@@ -36,8 +37,42 @@ def run_gold_tests():
         ]
         if "status" in df.columns:
             checks.append(
-                gdf.expect_column_values_to_be_in_set("status", ["paid", "failed", "pending"])
+                gdf.expect_column_values_to_be_in_set(
+                    "status", ["paid", "failed", "pending"]
+                )
             )
+        if "cashback_fee_ratio" in df.columns:
+            checks.append(
+                gdf.expect_column_values_to_not_be_null("cashback_fee_ratio")
+            )
+            checks.append(
+                gdf.expect_column_values_to_be_between(
+                    "cashback_fee_ratio", min_value=0, max_value=1
+                )
+            )
+        if "cashback_tpv_ratio" in df.columns:
+            checks.append(
+                gdf.expect_column_values_to_not_be_null("cashback_tpv_ratio")
+            )
+            checks.append(
+                gdf.expect_column_values_to_be_between(
+                    "cashback_tpv_ratio", min_value=0, max_value=1
+                )
+            )
+        if "net_revenue" in df.columns:
+            checks.append(gdf.expect_column_values_to_not_be_null("net_revenue"))
+            if {"transaction_fee", "cashback"}.issubset(df.columns):
+                invalid_count = df.filter(
+                    (col("transaction_fee") < col("cashback"))
+                    & (col("net_revenue") > 0)
+                ).count()
+                checks.append(
+                    {
+                        "success": invalid_count == 0,
+                        "unexpected_count": invalid_count,
+                        "expectation_type": "net_revenue_consistency",
+                    }
+                )
 
         results["gold.fact_transactions"] = checks
     except Exception as e:
