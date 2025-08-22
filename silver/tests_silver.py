@@ -8,10 +8,10 @@ def run_silver_tests():
 
     # --- silver_users ---
     try:
-        df = spark.read.table("silver.silver_users")
+        df = spark.read.table("`recarga-pay`.silver.users")
         gdf = ge.dataset.SparkDFDataset(df)
 
-        results["silver.silver_users"] = [
+        results["`recarga-pay`.silver.users"] = [
             gdf.expect_column_values_to_not_be_null("user_id"),
             gdf.expect_column_values_to_be_unique("user_id"),
             gdf.expect_column_values_to_not_be_null("email"),
@@ -19,11 +19,11 @@ def run_silver_tests():
             gdf.expect_column_values_to_not_be_null("updated_at"),
         ]
     except Exception as e:
-        results["silver.silver_users"] = [{"success": False, "error": str(e)}]
+        results["`recarga-pay`.silver.users"] = [{"success": False, "error": str(e)}]
 
     # --- silver_transactions ---
     try:
-        df = spark.read.table("silver.silver_transactions")
+        df = spark.read.table("`recarga-pay`.silver.transactions")
         gdf = ge.dataset.SparkDFDataset(df)
 
         checks = [
@@ -39,8 +39,8 @@ def run_silver_tests():
                 gdf.expect_column_values_to_be_in_set("status", ["paid", "failed", "pending"])
             )
 
-        results["silver.silver_transactions"] = checks
+        results["`recarga-pay`.silver.transactions"] = checks
     except Exception as e:
-        results["silver.silver_transactions"] = [{"success": False, "error": str(e)}]
+        results["`recarga-pay`.silver.transactions"] = [{"success": False, "error": str(e)}]
 
     return results
