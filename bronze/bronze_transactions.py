@@ -8,6 +8,9 @@ TABLE_COMMENT = "Dados brutos de transações, cópia 1:1 da origem."
 # --- Lógica de Ingestão ---
 print(f"Iniciando a carga da tabela: {TARGET_TABLE}")
 
+# Criar schema bronze se não existir
+spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.bronze")
+
 # Ler a tabela de origem
 df_raw = spark.table(SOURCE_TABLE)
 

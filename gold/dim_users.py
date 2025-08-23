@@ -7,6 +7,9 @@ TABLE_COMMENT = "Dimensão de usuários com perfil do cliente e atributos estát
 # --- Lógica de Transformação Gold ---
 print(f"Iniciando criação da dimensão Gold: {TARGET_TABLE}")
 
+# Criar schema gold se não existir
+spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.gold")
+
 df_silver = spark.table(SOURCE_TABLE)
 
 # Apenas seleção de colunas relevantes para a dimensão (sem transformações)

@@ -8,6 +8,9 @@ TABLE_COMMENT = "Usuários com limpeza avançada (telefone padronizado, textos e
 # --- Lógica de Transformação ---
 print(f"Iniciando transformação Silver para: {TARGET_TABLE}")
 
+# Criar schema silver se não existir
+spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.silver")
+
 df_bronze = spark.table(SOURCE_TABLE)
 
 # Aplicar as transformações de limpeza e padronização (que estavam na Bronze)

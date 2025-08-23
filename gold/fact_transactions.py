@@ -8,6 +8,9 @@ TABLE_COMMENT = "Fato de transações com métricas financeiras derivadas para a
 # --- Lógica de Transformação Gold ---
 print(f"Iniciando criação da tabela de fatos: {TARGET_TABLE}")
 
+# Criar schema gold se não existir
+spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.gold")
+
 # Ler dados da tabela Silver
 df_silver = spark.table(SOURCE_TABLE)
 

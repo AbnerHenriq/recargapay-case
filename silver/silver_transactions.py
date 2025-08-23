@@ -7,6 +7,9 @@ TABLE_COMMENT = "Transações com transformações aplicadas (movidas da Bronze 
 # --- Lógica de Transformação ---
 print(f"Iniciando transformação Silver para: {TARGET_TABLE}")
 
+# Criar schema silver se não existir
+spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.silver")
+
 # Ler dados da Bronze
 df_bronze = spark.table(SOURCE_TABLE)
 
