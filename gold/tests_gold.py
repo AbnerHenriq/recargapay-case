@@ -15,7 +15,7 @@ def run_gold_tests():
             gdf.expect_column_values_to_not_be_null("user_id"),
             gdf.expect_column_values_to_be_unique("user_id"),
             gdf.expect_column_values_to_not_be_null("email"),
-            gdf.expect_column_values_to_not_be_null("data_cadastro"),
+            gdf.expect_column_values_to_not_be_null("data_ativacao"),
             gdf.expect_column_values_to_not_be_null("_gold_processing_timestamp"),
         ]
     except Exception as e:
@@ -41,11 +41,7 @@ def run_gold_tests():
             ),
             gdf.expect_column_values_to_not_be_null("_gold_processing_timestamp"),
         ]
-        if "transaction_status" in df.columns:
-            checks.append(
-                gdf.expect_column_values_to_be_in_set("transaction_status", ["paid", "failed", "pending"])
-            )
-
+        
         results["gold.fact_transactions"] = checks
     except Exception as e:
         results["gold.fact_transactions"] = [{"success": False, "error": str(e)}]

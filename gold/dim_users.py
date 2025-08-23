@@ -23,7 +23,7 @@ df_dim_users = (df_silver
         "faixa_renda",
         "estado",
         "dispositivo",
-        "data_cadastro"
+        "data_ativacao"
     )
     # Adicionar metadados de processamento Gold
     .withColumn("_gold_processing_timestamp", current_timestamp())
