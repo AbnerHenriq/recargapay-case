@@ -47,7 +47,6 @@ df_final = df_fact_transactions.select(
         "product_name",
         "merchant_name",
         "payment_method",
-        "transaction_status",
         
         # Valores monetários originais
         "product_amount",
@@ -80,6 +79,6 @@ df_final.show(5, truncate=False)
 
 print(f"Total de transações na tabela de fatos: {df_final.count()}")
 
-# Verificar distribuição por status
-print("\nDistribuição de transações por status:")
-df_final.groupBy("transaction_status").count().orderBy("count", ascending=False).show()
+# Verificar distribuição por categoria
+print("\nDistribuição de transações por categoria:")
+df_final.groupBy("product_category").count().orderBy("count", ascending=False).show()
