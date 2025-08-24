@@ -9,7 +9,7 @@ def run_bronze_tests():
     # --- bronze_users ---
     try:
         df = spark.read.table("`recarga-pay`.bronze.users")
-        gdf = ge.SparkDFDataset(df)
+        gdf = ge.SparkDataFrame(df)
 
         results["bronze.users"] = [
             gdf.expect_column_values_to_not_be_null("id_usuario"),
@@ -23,14 +23,14 @@ def run_bronze_tests():
     # --- bronze_transactions ---
     try:
         df = spark.read.table("`recarga-pay`.bronze.transactions")
-        gdf = ge.SparkDFDataset(df)
+        gdf = ge.SparkDataFrame(df)
 
         checks = [
-            gdf.expect_column_values_to_not_be_null("id_transacao"),
-            gdf.expect_column_values_to_be_unique("id_transacao"),
-            gdf.expect_column_values_to_not_be_null("id_usuario"),
-            gdf.expect_column_values_to_not_be_null("valor_produto"),
-            gdf.expect_column_values_to_not_be_null("data_transacao"),
+            gdf.expect_column_values_to_not_be_null("transaction_id"),
+            gdf.expect_column_values_to_be_unique("transaction_id"),
+            gdf.expect_column_values_to_not_be_null("user_id"),
+            gdf.expect_column_values_to_not_be_null("product_amount"),
+            gdf.expect_column_values_to_not_be_null("transaction_date"),
         ]
         if "status" in df.columns:
             checks.append(

@@ -9,7 +9,7 @@ def run_silver_tests():
     # --- silver_users ---
     try:
         df = spark.read.table("`recarga-pay`.silver.users")
-        gdf = ge.SparkDFDataset(df)
+        gdf = ge.SparkDataFrame(df)
 
         results["silver.users"] = [
             gdf.expect_column_values_to_not_be_null("user_id"),
@@ -24,7 +24,7 @@ def run_silver_tests():
     # --- silver_transactions ---
     try:
         df = spark.read.table("`recarga-pay`.silver.transactions")
-        gdf = ge.SparkDFDataset(df)
+        gdf = ge.SparkDataFrame(df)
 
         checks = [
             gdf.expect_column_values_to_not_be_null("transaction_id"),
