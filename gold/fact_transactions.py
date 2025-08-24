@@ -55,6 +55,7 @@ df_final = df_fact_transactions.select(
         "product_amount",
         "transaction_fee",
         "cashback",
+        "loyalty_points",
         
         # Métricas derivadas financeiras
         "net_revenue",
