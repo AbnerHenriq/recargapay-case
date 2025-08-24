@@ -8,14 +8,14 @@ def run_gold_tests():
 
     # --- dim_users ---
     try:
-        df = spark.read.table("gold.dim_users")
+        df = spark.read.table("`recarga-pay`.gold.dim_users")
         gdf = ge.SparkDFDataset(df)
 
         results["gold.dim_users"] = [
             gdf.expect_column_values_to_not_be_null("user_id"),
             gdf.expect_column_values_to_be_unique("user_id"),
             gdf.expect_column_values_to_not_be_null("email"),
-            gdf.expect_column_values_to_not_be_null("data_ativacao"),
+            gdf.expect_column_values_to_not_be_null("activation_date"),
             gdf.expect_column_values_to_not_be_null("_gold_processing_timestamp"),
         ]
     except Exception as e:
@@ -23,7 +23,7 @@ def run_gold_tests():
 
     # --- fact_transactions ---
     try:
-        df = spark.read.table("gold.fact_transactions")
+        df = spark.read.table("`recarga-pay`.gold.fact_transactions")
         gdf = ge.SparkDFDataset(df)
 
         checks = [

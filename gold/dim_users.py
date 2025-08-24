@@ -16,17 +16,17 @@ df_silver = spark.table(SOURCE_TABLE)
 df_dim_users = (df_silver
     .select(
         "user_id",
-        "nome",
+        "name",
         "email", 
-        "telefone",
-        "data_nascimento",
-        "genero",
-        "estado_civil",
-        "ocupacao",
-        "faixa_renda",
-        "estado",
-        "dispositivo",
-        "data_ativacao"
+        "phone",
+        "birth_date",
+        "gender",
+        "marital_status",
+        "occupation",
+        "income_range",
+        "state",
+        "device",
+        "activation_date"
     )
     # Adicionar metadados de processamento Gold
     .withColumn("_gold_processing_timestamp", current_timestamp())

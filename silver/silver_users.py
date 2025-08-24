@@ -3,46 +3,63 @@ from pyspark.sql.types import StringType
 
 SOURCE_TABLE = "`recarga-pay`.bronze.users"
 TARGET_TABLE = "`recarga-pay`.silver.users"
-TABLE_COMMENT = "Usuários com limpeza avançada (telefone padronizado, textos em maiúsculas), transformações movidas da Bronze para Silver."
+TABLE_COMMENT = "Usuários com limpeza avançada (telefone padronizado, textos em maiúsculas), transformações movidas da Bronze para Silver e colunas em inglês."
 
 # --- Lógica de Transformação ---
 print(f"Iniciando transformação Silver para: {TARGET_TABLE}")
 
 df_bronze = spark.table(SOURCE_TABLE)
 
+# Remover coluna _bronze_ingestion_timestamp e renomear colunas para inglês
+df_renamed = (df_bronze
+    .drop("_bronze_ingestion_timestamp")
+    .withColumnRenamed("id_usuario", "user_id")
+    .withColumnRenamed("nome", "name")
+    .withColumnRenamed("email", "email")
+    .withColumnRenamed("telefone", "phone")
+    .withColumnRenamed("data_nascimento", "birth_date")
+    .withColumnRenamed("genero", "gender")
+    .withColumnRenamed("estado_civil", "marital_status")
+    .withColumnRenamed("ocupacao", "occupation")
+    .withColumnRenamed("faixa_renda", "income_range")
+    .withColumnRenamed("estado", "state")
+    .withColumnRenamed("dispositivo", "device")
+    .withColumnRenamed("data_ativacao", "activation_date")
+)
+
 # Aplicar as transformações de limpeza e padronização (que estavam na Bronze)
-df_cleaned = (df_bronze
+df_cleaned = (df_renamed
     # Adiciona uma coluna 'telefone_limpo' para o tratamento sequencial
-    .withColumn("telefone_limpo", regexp_replace(col("telefone"), "[^0-9]", ""))
+    .withColumn("phone_clean", regexp_replace(col("phone"), "[^0-9]", ""))
     
     # Aplica a lógica de padronização do telefone
-    .withColumn("telefone_normalizado",
+    .withColumn("phone_normalized",
         # REGRA 1: Corrige o prefixo '550' incorreto, removendo o '0'
-        when(col("telefone_limpo").startswith("550"), concat(lit("55"), expr("substring(telefone_limpo, 4)")))
+        when(col("phone_clean").startswith("550"), concat(lit("55"), expr("substring(phone_clean, 4)")))
         
         # REGRA 2: Se já começa com '55' e tem tamanho válido (12 ou 13 dígitos), já está correto.
-        .when(col("telefone_limpo").startswith("55") & length(col("telefone_limpo")).isin(12, 13), col("telefone_limpo"))
+        .when(col("phone_clean").startswith("55") & length(col("phone_clean")).isin(12, 13), col("phone_clean"))
         
         # REGRA 3: Se começa com '0' (ligação nacional), remove o '0' e adiciona '55'
-        .when(col("telefone_limpo").startswith("0") & length(col("telefone_limpo")).isin(10, 11), concat(lit("55"), expr("substring(telefone_limpo, 2)")))
+        .when(col("phone_clean").startswith("0") & length(col("phone_clean")).isin(10, 11), concat(lit("55"), expr("substring(phone_clean, 2)")))
         
         # REGRA 4: Se tem 10 ou 11 dígitos (DDD + Número), apenas adiciona '55'
-        .when(length(col("telefone_limpo")).isin(10, 11), concat(lit("55"), col("telefone_limpo")))
+        .when(length(col("phone_clean")).isin(10, 11), concat(lit("55"), col("phone_clean")))
         
         # Se não se encaixar em nenhuma regra, mantém o número limpo para análise posterior
-        .otherwise(col("telefone_limpo"))
+        .otherwise(col("phone_clean"))
     )
     # Substitui a coluna original de telefone pela versão normalizada e remove as colunas intermediárias
-    .withColumn("telefone", col("telefone_normalizado"))
-    .drop("telefone_limpo", "telefone_normalizado")
+    .withColumn("phone", col("phone_normalized"))
+    .drop("phone_clean", "phone_normalized")
     
     # Mantém as outras transformações
-    .withColumn("genero",
-        when(upper(col("genero")).isin("F", "FEM"), "Feminino")
-        .when(upper(col("genero")).isin("M", "MASC"), "Masculino")
-        .otherwise("Outro")
+    .withColumn("gender",
+        when(upper(col("gender")).isin("F", "FEM"), "FEMININO")
+        .when(upper(col("gender")).isin("M", "MASC"), "MASCULINO")
+        .otherwise("OUTRO")
     )
-    .withColumn("estado_civil", regexp_replace(col("estado_civil"), "/a", ""))
+    .withColumn("marital_status", regexp_replace(col("marital_status"), "/a", ""))
     .withColumn("_silver_processing_timestamp", current_timestamp())
 )
 
