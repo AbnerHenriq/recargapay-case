@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+"""
+Runner principal para executar todos os testes de data quality
+das camadas bronze, silver e gold usando Great Expectations
+"""
+
+# Instalar Great Expectations (funciona no Databricks)
+!pip install great-expectations
+
 from gold.tests_gold import run_gold_tests
 from silver.tests_silver import run_silver_tests
 from bronze.tests_bronze import run_bronze_tests
@@ -9,19 +18,15 @@ if __name__ == "__main__":
     all_results.update(run_gold_tests())
 
     for table, tests in all_results.items():
-        print(f"\n📊 Results for {table}")
+        print(f"\nResults for {table}")
         for t in tests:
-            # Verifica se é um erro ou um teste Great Expectations
             if isinstance(t, dict) and "error" in t:
-                print(f" ❌ ERROR: {t['error']}")
+                print(f" ERROR: {t['error']}")
             else:
-                # É um objeto Great Expectations
-                status = "✅ PASSED" if t.success else "❌ FAILED"
-                expectation_type = t.expectation_type
-                print(f" - {expectation_type}: {status}")
+                status = "PASSED" if t.success else "FAILED"
+                print(f" - {t.expectation_type}: {status}")
                 
-                # Adiciona detalhes para testes que falharam
                 if not t.success:
                     unexpected_count = getattr(t, 'unexpected_count', 0)
                     if unexpected_count > 0:
-                        print(f"     ⚠️  Valores inesperados: {unexpected_count}")
+                        print(f"     Valores inesperados: {unexpected_count}")
