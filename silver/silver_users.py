@@ -1,10 +1,10 @@
-from pyspark.sql.functions import col, when, upper, regexp_replace, current_timestamp, length, concat, lit, expr
+from pyspark.sql.functions import col, when, upper, regexp_replace, current_timestamp, length, concat, lit, expr, datediff, current_date
 from pyspark.sql.types import StringType
 from macro_transform import normalize_state_to_uf
 
 SOURCE_TABLE = "`recarga-pay`.bronze.users"
 TARGET_TABLE = "`recarga-pay`.silver.users"
-TABLE_COMMENT = "Usuários com limpeza avançada (telefone padronizado, textos em maiúsculas), transformações movidas da Bronze para Silver e colunas em inglês."
+TABLE_COMMENT = "Usuários com limpeza avançada (telefone padronizado, textos em maiúsculas), transformações movidas da Bronze para Silver, colunas em inglês e categorização de faixa etária."
 
 # --- Lógica de Transformação ---
 print(f"Iniciando transformação Silver para: {TARGET_TABLE}")
@@ -61,6 +61,18 @@ df_cleaned = (df_renamed
         .otherwise("OUTRO")
     )
     .withColumn("marital_status", regexp_replace(col("marital_status"), "/a", ""))
+    
+    # Adicionar categorização de faixa etária
+    .withColumn(
+        "faixa_etaria",
+        when(datediff(current_date(), col("birth_date")) / 365.25 < 18, "MENOR_18")
+        .when(datediff(current_date(), col("birth_date")) / 365.25 <= 25, "18-25")
+        .when(datediff(current_date(), col("birth_date")) / 365.25 <= 35, "26-35")
+        .when(datediff(current_date(), col("birth_date")) / 365.25 <= 45, "36-45")
+        .when(datediff(current_date(), col("birth_date")) / 365.25 <= 60, "46-60")
+        .otherwise("60+")
+    )
+    
     .withColumn("_silver_processing_timestamp", current_timestamp())
 )
 

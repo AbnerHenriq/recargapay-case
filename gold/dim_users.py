@@ -1,9 +1,9 @@
-from pyspark.sql.functions import current_timestamp, col, sum, when, coalesce, lit
+from pyspark.sql.functions import current_timestamp, col, sum, when, coalesce, lit, count, min, max
 
 SOURCE_TABLE_USERS = "`recarga-pay`.silver.users"
-SOURCE_TABLE_TRANSACTIONS = "`recarga-pay`.silver.transactions"
+SOURCE_TABLE_TRANSACTIONS = "`recarga-pay`.bronze.transactions"
 TARGET_TABLE = "`recarga-pay`.gold.dim_users"
-TABLE_COMMENT = "Dimensão de usuários com perfil do cliente, atributos estáticos e métricas agregadas (TPV lifetime, cashback, loyalty points) para análise dimensional."
+TABLE_COMMENT = "Dimensão de usuários com perfil do cliente, atributos estáticos e métricas agregadas (TPV lifetime, cashback, loyalty points, ticket médio, primeira/última transação, faixa etária) para análise dimensional."
 
 # --- Lógica de Transformação Gold ---
 print(f"Iniciando criação da dimensão Gold: {TARGET_TABLE}")
@@ -12,10 +12,10 @@ print(f"Iniciando criação da dimensão Gold: {TARGET_TABLE}")
 spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.gold")
 
 df_silver_users = spark.table(SOURCE_TABLE_USERS)
-df_silver_transactions = spark.table(SOURCE_TABLE_TRANSACTIONS)
+df_bronze_transactions = spark.table(SOURCE_TABLE_TRANSACTIONS)
 
 # Calcular métricas agregadas por usuário das transações
-df_user_metrics = (df_silver_transactions
+df_user_metrics = (df_bronze_transactions
     .groupBy("user_id")
     .agg(
         # TPV Lifetime - soma total de todas as transações por usuário
@@ -25,13 +25,44 @@ df_user_metrics = (df_silver_transactions
         coalesce(sum("cashback"), lit(0)).alias("total_cashback"),
         
         # Loyalty Points - soma total de pontos de fidelidade por usuário
-        coalesce(sum("loyalty_points"), lit(0)).alias("total_loyalty_points")
+        coalesce(sum("loyalty_points"), lit(0)).alias("total_loyalty_points"),
+        
+        # Contagem de transações para calcular ticket médio
+        coalesce(count("*"), lit(0)).alias("total_transactions"),
+        
+        # Soma do product_amount para calcular ticket médio
+        coalesce(sum("product_amount"), lit(0)).alias("total_product_amount"),
+        
+        # Primeira transação (data mais antiga)
+        min("transaction_date").alias("first_transaction_date"),
+        
+        # Última transação (data mais recente)
+        max("transaction_date").alias("last_transaction_date")
+    )
+)
+
+# Calcular ticket médio
+df_metrics_with_ticket = (df_user_metrics
+    .withColumn(
+        "ticket_medio",
+        when(col("total_transactions") > 0, col("total_product_amount") / col("total_transactions"))
+        .otherwise(0)
+    )
+    .select(
+        "user_id",
+        "tpv_lifetime",
+        "total_cashback",
+        "total_loyalty_points",
+        "ticket_medio",
+        "total_transactions",
+        "first_transaction_date",
+        "last_transaction_date"
     )
 )
 
 # Fazer join entre usuários e métricas calculadas
 df_dim_users = (df_silver_users
-    .join(df_user_metrics, "user_id", "left")
+    .join(df_metrics_with_ticket, "user_id", "left")
     .select(
         "user_id",
         "name",
@@ -45,10 +76,15 @@ df_dim_users = (df_silver_users
         "state",
         "device",
         "activation_date",
-        # Adicionar as métricas calculadas
+        "faixa_etaria",
+        # Métricas calculadas na Gold
         "tpv_lifetime",
         "total_cashback",
-        "total_loyalty_points"
+        "total_loyalty_points",
+        "ticket_medio",
+        "total_transactions",
+        "first_transaction_date",
+        "last_transaction_date"
     )
     # Adicionar metadados de processamento Gold
     .withColumn("_gold_processing_timestamp", current_timestamp())
@@ -70,3 +106,11 @@ print("Amostra dos dados da dimensão de usuários:")
 df_dim_users.show(5, truncate=False)
 
 print(f"Total de usuários na dimensão: {df_dim_users.count()}")
+
+# Mostrar estatísticas das métricas calculadas
+print("\nEstatísticas das métricas calculadas:")
+df_dim_users.select("tpv_lifetime", "total_cashback", "total_loyalty_points", "ticket_medio", "total_transactions").summary().show()
+
+# Mostrar distribuição das faixas etárias
+print("\nDistribuição das faixas etárias:")
+df_dim_users.groupBy("faixa_etaria").count().orderBy("faixa_etaria").show()
