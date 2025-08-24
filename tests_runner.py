@@ -4,9 +4,6 @@ Runner principal para executar todos os testes de data quality
 das camadas bronze, silver e gold usando Great Expectations
 """
 
-# Instalar Great Expectations (funciona no Databricks)
-!pip install great-expectations
-
 from gold.tests_gold import run_gold_tests
 from silver.tests_silver import run_silver_tests
 from bronze.tests_bronze import run_bronze_tests

@@ -8,35 +8,39 @@ def run_silver_tests():
 
     # --- silver_users ---
     try:
-        df = spark.read.table("`recarga-pay`.silver.users")
-        gdf = ge.dataset.SparkDFDataset(df)
+        df = spark.read.table("silver.silver_users")
+        gdf = ge.SparkDFDataset(df)
 
-        results["`recarga-pay`.silver.users"] = [
+        results["silver.silver_users"] = [
             gdf.expect_column_values_to_not_be_null("user_id"),
             gdf.expect_column_values_to_be_unique("user_id"),
             gdf.expect_column_values_to_not_be_null("email"),
-            gdf.expect_column_values_to_not_be_null("data_ativacao"),
-            gdf.expect_column_values_to_not_be_null("_silver_processing_timestamp"),
+            gdf.expect_column_values_to_not_be_null("created_at"),
+            gdf.expect_column_values_to_not_be_null("updated_at"),
         ]
     except Exception as e:
-        results["`recarga-pay`.silver.users"] = [{"success": False, "error": str(e)}]
+        results["silver.silver_users"] = [{"success": False, "error": str(e)}]
 
     # --- silver_transactions ---
     try:
-        df = spark.read.table("`recarga-pay`.silver.transactions")
-        gdf = ge.dataset.SparkDFDataset(df)
+        df = spark.read.table("silver.silver_transactions")
+        gdf = ge.SparkDFDataset(df)
 
         checks = [
             gdf.expect_column_values_to_not_be_null("transaction_id"),
             gdf.expect_column_values_to_be_unique("transaction_id"),
             gdf.expect_column_values_to_not_be_null("user_id"),
-            gdf.expect_column_values_to_not_be_null("product_amount"),
-            gdf.expect_column_values_to_not_be_null("transaction_date"),
-            gdf.expect_column_values_to_not_be_null("_silver_processing_timestamp"),
+            gdf.expect_column_values_to_not_be_null("amount"),
+            gdf.expect_column_values_to_not_be_null("created_at"),
+            gdf.expect_column_values_to_not_be_null("updated_at"),
         ]
+        if "status" in df.columns:
+            checks.append(
+                gdf.expect_column_values_to_be_in_set("status", ["paid", "failed", "pending"])
+            )
 
-        results["`recarga-pay`.silver.transactions"] = checks
+        results["silver.silver_transactions"] = checks
     except Exception as e:
-        results["`recarga-pay`.silver.transactions"] = [{"success": False, "error": str(e)}]
+        results["silver.silver_transactions"] = [{"success": False, "error": str(e)}]
 
     return results

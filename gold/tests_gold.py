@@ -9,7 +9,7 @@ def run_gold_tests():
     # --- dim_users ---
     try:
         df = spark.read.table("gold.dim_users")
-        gdf = ge.dataset.SparkDFDataset(df)
+        gdf = ge.SparkDFDataset(df)
 
         results["gold.dim_users"] = [
             gdf.expect_column_values_to_not_be_null("user_id"),
@@ -24,7 +24,7 @@ def run_gold_tests():
     # --- fact_transactions ---
     try:
         df = spark.read.table("gold.fact_transactions")
-        gdf = ge.dataset.SparkDFDataset(df)
+        gdf = ge.SparkDFDataset(df)
 
         checks = [
             gdf.expect_column_values_to_not_be_null("transaction_id"),
