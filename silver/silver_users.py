@@ -1,5 +1,6 @@
 from pyspark.sql.functions import col, when, upper, regexp_replace, current_timestamp, length, concat, lit, expr
 from pyspark.sql.types import StringType
+from macro_transform import normalize_state_to_uf
 
 SOURCE_TABLE = "`recarga-pay`.bronze.users"
 TARGET_TABLE = "`recarga-pay`.silver.users"
@@ -63,10 +64,12 @@ df_cleaned = (df_renamed
     .withColumn("_silver_processing_timestamp", current_timestamp())
 )
 
-# Converter todos os campos de letras para maiúsculo e deixar padronizado
-string_columns = [field.name for field in df_cleaned.schema.fields if isinstance(field.dataType, StringType)]
+# Normalizar estados para UF antes de converter para maiúsculo
+df_final = normalize_state_to_uf(df_cleaned, "state")
 
-df_final = df_cleaned
+# Converter todos os campos de letras para maiúsculo e deixar padronizado
+string_columns = [field.name for field in df_final.schema.fields if isinstance(field.dataType, StringType)]
+
 for col_name in string_columns:
     df_final = df_final.withColumn(col_name, upper(col(col_name)))
 
