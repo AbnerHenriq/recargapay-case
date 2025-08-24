@@ -17,6 +17,14 @@ def run_gold_tests():
             gdf.expect_column_values_to_not_be_null("email"),
             gdf.expect_column_values_to_not_be_null("activation_date"),
             gdf.expect_column_values_to_not_be_null("_gold_processing_timestamp"),
+            # Novos testes para as métricas calculadas
+            gdf.expect_column_values_to_not_be_null("tpv_lifetime"),
+            gdf.expect_column_values_to_not_be_null("total_cashback"),
+            gdf.expect_column_values_to_not_be_null("total_loyalty_points"),
+            # Validar que os valores são numéricos e não negativos
+            gdf.expect_column_values_to_be_between("tpv_lifetime", 0, None),
+            gdf.expect_column_values_to_be_between("total_cashback", 0, None),
+            gdf.expect_column_values_to_be_between("total_loyalty_points", 0, None),
         ]
     except Exception as e:
         results["gold.dim_users"] = [{"success": False, "error": str(e)}]

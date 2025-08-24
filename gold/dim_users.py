@@ -1,8 +1,9 @@
-from pyspark.sql.functions import current_timestamp
+from pyspark.sql.functions import current_timestamp, col, sum, when, coalesce, lit
 
-SOURCE_TABLE = "`recarga-pay`.silver.users"
+SOURCE_TABLE_USERS = "`recarga-pay`.silver.users"
+SOURCE_TABLE_TRANSACTIONS = "`recarga-pay`.silver.transactions"
 TARGET_TABLE = "`recarga-pay`.gold.dim_users"
-TABLE_COMMENT = "Dimensão de usuários com perfil do cliente e atributos estáticos para análise dimensional."
+TABLE_COMMENT = "Dimensão de usuários com perfil do cliente, atributos estáticos e métricas agregadas (TPV lifetime, cashback, loyalty points) para análise dimensional."
 
 # --- Lógica de Transformação Gold ---
 print(f"Iniciando criação da dimensão Gold: {TARGET_TABLE}")
@@ -10,10 +11,27 @@ print(f"Iniciando criação da dimensão Gold: {TARGET_TABLE}")
 # Criar schema gold se não existir
 spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.gold")
 
-df_silver = spark.table(SOURCE_TABLE)
+df_silver_users = spark.table(SOURCE_TABLE_USERS)
+df_silver_transactions = spark.table(SOURCE_TABLE_TRANSACTIONS)
 
-# Apenas seleção de colunas relevantes para a dimensão (sem transformações)
-df_dim_users = (df_silver
+# Calcular métricas agregadas por usuário das transações
+df_user_metrics = (df_silver_transactions
+    .groupBy("user_id")
+    .agg(
+        # TPV Lifetime - soma total de todas as transações por usuário
+        coalesce(sum("tpv"), lit(0)).alias("tpv_lifetime"),
+        
+        # Cashback - soma total de cashback por usuário
+        coalesce(sum("cashback"), lit(0)).alias("total_cashback"),
+        
+        # Loyalty Points - soma total de pontos de fidelidade por usuário
+        coalesce(sum("loyalty_points"), lit(0)).alias("total_loyalty_points")
+    )
+)
+
+# Fazer join entre usuários e métricas calculadas
+df_dim_users = (df_silver_users
+    .join(df_user_metrics, "user_id", "left")
     .select(
         "user_id",
         "name",
@@ -26,7 +44,11 @@ df_dim_users = (df_silver
         "income_range",
         "state",
         "device",
-        "activation_date"
+        "activation_date",
+        # Adicionar as métricas calculadas
+        "tpv_lifetime",
+        "total_cashback",
+        "total_loyalty_points"
     )
     # Adicionar metadados de processamento Gold
     .withColumn("_gold_processing_timestamp", current_timestamp())
