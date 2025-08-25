@@ -3,7 +3,7 @@
 from pyspark.sql.functions import current_timestamp, col, sum, when, coalesce, lit, count, min, max
 
 SOURCE_TABLE_USERS = "`recarga-pay`.silver.users"
-SOURCE_TABLE_TRANSACTIONS = "`recarga-pay`.bronze.transactions"
+SOURCE_TABLE_TRANSACTIONS = "`recarga-pay`.silver.transactions"
 TARGET_TABLE = "`recarga-pay`.gold.dim_users"
 TABLE_COMMENT = "Dimensão de usuários com perfil do cliente, atributos estáticos e métricas agregadas (TPV lifetime, cashback, loyalty points, ticket médio, primeira/última transação, faixa etária) para análise dimensional."
 
@@ -14,14 +14,14 @@ print(f"Iniciando criação da dimensão Gold: {TARGET_TABLE}")
 spark.sql("CREATE SCHEMA IF NOT EXISTS `recarga-pay`.gold")
 
 df_silver_users = spark.table(SOURCE_TABLE_USERS)
-df_bronze_transactions = spark.table(SOURCE_TABLE_TRANSACTIONS)
+df_silver_transactions = spark.table(SOURCE_TABLE_TRANSACTIONS)
 
 # Calcular métricas agregadas por usuário das transações
-df_user_metrics = (df_bronze_transactions
+df_user_metrics = (df_silver_transactions
     .groupBy("user_id")
     .agg(
         # TPV Lifetime - soma total de todas as transações por usuário
-        coalesce(sum("tpv"), lit(0)).alias("tpv_lifetime"),
+        coalesce(sum("product_amount"), lit(0)).alias("tpv_lifetime"),
         
         # Cashback - soma total de cashback por usuário
         coalesce(sum("cashback"), lit(0)).alias("total_cashback"),
@@ -108,11 +108,3 @@ print("Amostra dos dados da dimensão de usuários:")
 df_dim_users.show(5, truncate=False)
 
 print(f"Total de usuários na dimensão: {df_dim_users.count()}")
-
-# Mostrar estatísticas das métricas calculadas
-print("\nEstatísticas das métricas calculadas:")
-df_dim_users.select("tpv_lifetime", "total_cashback", "total_loyalty_points", "ticket_medio", "total_transactions").summary().show()
-
-# Mostrar distribuição das faixas etárias
-print("\nDistribuição das faixas etárias:")
-df_dim_users.groupBy("faixa_etaria").count().orderBy("faixa_etaria").show()
