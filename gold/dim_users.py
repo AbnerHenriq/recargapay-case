@@ -1,7 +1,4 @@
 # Importar configuração do Spark com Delta Lake
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pyspark.sql.functions import current_timestamp, col, sum, when, coalesce, lit, count, min, max
 
