@@ -1,15 +1,14 @@
-CASE - Recarga Pay
-
 ## Descrição
 
-Este projeto é um pipeline de ETL, utilizando o Spark para processar os dados. Ele é composto por três etapas:
+Este projeto é um pipeline de ETL, utilizando o Spark para processar os dados + data viz no tableau.
 
 1. Bronze
 2. Silver
-    - Diversas correções foram aplicadas nas colunas, como: telefone, estado, genero, etc.
+    - Diversas correções foram aplicadas nas colunas, como: telefone, estado, gênero
 3. Gold
-    - Enriquecimento da dim_users com informações de transações (tpv_lifetime, ticket médio)
+    - Enriquecimento da dim_users com informações de transações (tpv_lifetime, ticket médio, etc)
 4. Data Quality
+5. Data Viz
 
 O projeto possui raw, sendo inserida manualmente dentro do Databricks.
 Bronze sendo uma camada 1=1 com a raw.
@@ -25,7 +24,7 @@ O pipeline deve funcionar da seguinte forma: rodar sequencialmente todas as laye
 
 Para esse projeto, quis trabalhar com as seguintes métricas:
 
-| Métrica | Cálculo (Tableau/Pseudo-SQL) | Motivo da Importância |
+| Métrica | Cálculo | Motivo |
 |---------|------------------------------|----------------------|
 | **TPV (Total Payment Volume)** | `SUM([product_amount])` | Mede o volume bruto de transações movimentadas na plataforma (saúde geral do negócio). |
 | **Interchange (Transaction Fee)** | `SUM([transaction_fee])` | Receita direta da operação, representa quanto a empresa ganha em taxas. |
@@ -38,8 +37,6 @@ Para esse projeto, quis trabalhar com as seguintes métricas:
 | **Qtd. Usuários Ativos** | `COUNTD([user_id])` com transação > 0 | Mede a base de clientes realmente engajados. |
 | **Ticket Médio** | `SUM([product_amount]) / COUNTD([user_id])` | Mostra o gasto médio por usuário → indicador de poder aquisitivo e engajamento. |
 | **% Novos Usuários** | `COUNTD([user_id] WHERE [activation_date] = mês atual) / COUNTD([user_id])` | Mede aquisição de clientes e crescimento da base. |
-| **Distribuição por Idade** | `DATEDIFF('year', [birth_date], TODAY())` | Identifica o perfil etário predominante (jovens vs. adultos vs. sêniores). |
-| **Distribuição por Faixa de Renda** | `COUNT([user_id]) GROUP BY [income_range]` | Mostra qual público econômico é mais representativo. |
 
 
 #### Storytelling
