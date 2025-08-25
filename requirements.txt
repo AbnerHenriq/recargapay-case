@@ -1,15 +1,10 @@
-# Dependências para testes de data quality com Great Expectations
-great-expectations>=0.17.0
+# Dependências essenciais para o projeto
 pyspark>=3.4.0
 delta-spark>=2.4.0
 
-# Dependências específicas para Delta Lake
-delta-core>=2.4.0
+# Dependências para testes de data quality
+great-expectations>=0.17.0
 
-# Dependências opcionais para melhor experiência
+# Dependências para manipulação de dados
 pandas>=1.5.0
 numpy>=1.24.0
-
-# Configurações do Spark para Delta Lake
-# SPARK_HOME deve estar configurado
-# PYSPARK_PYTHON deve estar configurado
